@@ -21,9 +21,13 @@ import adsk.fusion
 import traceback
 
 import time
+from math import sqrt as sqrt
+
+# Import local app modules - F360 doesn't have this app folder included in the SYSPATH, so we have to add in manually!
 from . import dbutils as dbUtils
 from .decorators import eventHandler, parseDecorator
-from math import sqrt as sqrt
+from .DbClasses import DbFace, DbEdge
+from .DbData import DbParams
 
 # Globals
 _app = adsk.core.Application.get()
@@ -32,13 +36,12 @@ _ui = _app.userInterface
 _rootComp = _design.rootComponent
 _appPath = os.path.dirname(os.path.abspath(__file__))
 _subpath = os.path.join(f"{_appPath}", "py_packages")
+
+# Add libraries subFolder to SYSPATH - F360 environment doesn't have any libraries automatically accessible
+# without this multi-folder/sub-folder libraries do not work.
 if _subpath not in sys.path:
     sys.path.insert(0, _subpath)
-    # sys.path.insert(0, os.path.join(f'{_appPath}','py_packages','dataclasses_json'))
     sys.path.insert(0, "")
-
-from DbData import DbParams
-from DbClasses import DbEdge, DbFace
 
 # constants - to keep attribute group and names consistent
 DOGBONE_GROUP = "dogBoneGroup"
@@ -50,7 +53,7 @@ DEBUGLEVEL = logging.NOTSET
 
 calcId = lambda x: hash(
     x.entityToken
-)  # if x.assemblyContext else str(x.tempId) + ':' + x.body.name
+)
 makeNative = lambda x: x.nativeObject if x.nativeObject else x
 reValidateFace = lambda comp, x: comp.findBRepUsingPoint(
     x, adsk.fusion.BRepEntityTypes.BRepFaceEntityType, -1.0, False
@@ -59,7 +62,6 @@ reValidateFace = lambda comp, x: comp.findBRepUsingPoint(
 
 class DogboneCommand(object):
     COMMAND_ID = "dogboneBtn"
-    # REFRESH_COMMAND_ID = "refreshDogboneBtn"
 
     param = DbParams()
     registeredEdgesDict = {}
@@ -91,6 +93,7 @@ class DogboneCommand(object):
         self.levels = {}
         self.logger = logging.getLogger("dogbone")
 
+# clean-up logger handlers - they often don't get gc'ed 
         for handler in self.logger.handlers:
             handler.flush()
             handler.close()
@@ -107,9 +110,6 @@ class DogboneCommand(object):
         self.logger.addHandler(self.logHandler)
 
         self.logger.debug("\n"*3 + "*"*80)
-
-        # for _ in ("decorators"):
-        #     self.logger.getLogger(_).setLevel(logging.NOTSET)
 
     def writeDefaults(self):
         self.logger.info("config file write")
@@ -150,18 +150,8 @@ class DogboneCommand(object):
                 f"\nstartVertex:({sx:.2f},{sy:.2f},{sz:.2f}) endVertex: ({ex:.2f},{ey:.2f},{ez:.2f})"
             )
 
-        # for edge in face.nativeObject.edges:
-        #     sx,sy,sz = edge.startVertex.geometry.asArray()
-        #     ex,ey,ez = edge.endVertex.geometry.asArray()
-            
-        #     self.logger.debug(
-        #         f"\nFace - Native"
-        #         f"\nedge: {edge.tempId}"
-        #         f"\nstartVertex:({sx:.2f},{sy:.2f},{sz:.2f}) endVertex: ({ex:.2f},{ey:.2f},{ez:.2f})"
-        #     )
-
         return
-
+#TODO
     # def addRefreshButton(self):
     #     try:
     #     # clean up any crashed instances of the button if existing
