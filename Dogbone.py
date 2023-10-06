@@ -37,6 +37,9 @@ if _subpath not in sys.path:
     # sys.path.insert(0, os.path.join(f'{_appPath}','py_packages','dataclasses_json'))
     sys.path.insert(0, "")
 
+from DbData import DbParams
+from DbClasses import DbEdge, DbFace
+
 # constants - to keep attribute group and names consistent
 DOGBONE_GROUP = "dogBoneGroup"
 # FACE_ID = 'faceID'
